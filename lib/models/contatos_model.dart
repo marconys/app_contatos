@@ -55,6 +55,15 @@ class Contatos {
     _updatedAt = json['updatedAt'];
   }
 
+  Map<String, dynamic> toJsonEndpoint() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['objectId'] = _objectId;
+    data['name'] = _name;
+    data['phone'] = _phone;
+    data['photoURL'] = _photoURL;
+    return data;
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['objectId'] = _objectId;
