@@ -12,6 +12,8 @@ class HomeContatosView extends StatefulWidget {
 class _HomeContatosViewState extends State<HomeContatosView> {
   var controllerName = TextEditingController(text: "");
   var controllerPhone = TextEditingController(text: "");
+  String photoUrl = "UrlDefault";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,6 +21,18 @@ class _HomeContatosViewState extends State<HomeContatosView> {
         title: const Text('Meus Contatos'),
         centerTitle: true,
       ),
+      body: ListView.builder(itemBuilder: (BuildContext bc, int index) {
+        return ListTile(
+          leading: (photoUrl != "UrlDefault")
+              ? Image.asset("")
+              : const Icon(Icons.person_3),
+          title: const Text("Nome do contato"),
+          subtitle: const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [Text("Telefone"), Icon(Icons.phone)],
+          ),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
@@ -43,12 +57,34 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                           TelefoneInputFormatter(),
                         ],
                       ),
-                      
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 20),
                           child: GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(Icons.camera_enhance),
+                                          title: const Text("Câmerea"),
+                                          onTap: () {
+
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.image_outlined),
+                                          title: const Text("Galeria"),
+                                          onTap: () {
+
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            },
                             child: const Column(
                               children: [
                                 Icon(Icons.person_add),
