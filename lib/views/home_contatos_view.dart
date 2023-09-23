@@ -35,6 +35,13 @@ class _HomeContatosViewState extends State<HomeContatosView> {
     });
   }
 
+  //Buca contato a partir do objectId;
+  getContatoByObjectId(String id) async {
+    var contato = await contatosRepository.getContaoByObjectId(id);
+    //TODO: INICIAR AS VARIÁVEIS QUE FOREM CRIADAS PARA ATUALIZAÇÃO DOS CAMPOS
+  }
+
+  // Snacbar padrão.
   void showSnackBar(String menssage) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -61,7 +68,7 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                         itemCount: _contatosModel.contatos?.length,
                         itemBuilder: (BuildContext bc, int index) {
                           var contato = _contatosModel.contatos?[index];
-                          
+
                           return Dismissible(
                             key: Key(contato!.objectId),
                             onDismissed:
@@ -86,6 +93,9 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                                   const Icon(Icons.phone)
                                 ],
                               ),
+                              onTap: () {
+                                //TODO: IMPLEMETAR SHOWDIALOG PARA ATUALIZAÇÃO DO CONTATO
+                              },
                             ),
                           );
                         }),
@@ -131,13 +141,17 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                                           leading:
                                               const Icon(Icons.camera_enhance),
                                           title: const Text("Câmerea"),
-                                          onTap: () {},
+                                          onTap: () {
+                                            //TODO: IMPLEMENTAR CAPTURA E ARMAZENAR IMAGEM DA CAMERA
+                                          },
                                         ),
                                         ListTile(
                                           leading:
                                               const Icon(Icons.image_outlined),
                                           title: const Text("Galeria"),
-                                          onTap: () {},
+                                          onTap: () {
+                                            //TODO: IMPLEMENTAR CAPTURA DE IMAGE DA GALERIA
+                                          },
                                         ),
                                       ],
                                     );
@@ -160,11 +174,16 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                           Navigator.pop(context);
                         },
                         child: const Text("Cancelar")),
-                    TextButton(onPressed: () {}, child: const Text("Salvar")),
+                    TextButton(
+                        onPressed: () {
+                          //TODO: IMPLEMENTAR A CRIAÇAO DE UM NOVO CONTATO.
+                        },
+                        child: const Text("Salvar")),
                   ],
                 );
               });
         },
+        //TODO: IMPLEMENTAR WIDGET PARA EXIBIR IMAGEM SELECIONADA E CONDIÇÃO PARA EXIBIÇÃO DA IMAGEM OU DO ICONE
         child: const Icon(Icons.add),
       ),
     );
