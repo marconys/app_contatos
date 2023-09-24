@@ -1,16 +1,22 @@
-# contatos
-
-A new Flutter project.
+# app_contatos
+Projeto desenvolvido como atividade do Santander Bootcamp 2023 - Mobile Com Flutter.
 
 ## Getting Started
+Um aplicativo de lista de contatos desenvolvido em Flutter que permite criar, visualizar, atualizar e excluir contatos. Você também pode adicionar fotos de perfil aos seus contatos diretamente da câmera ou da galeria.
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
+## Funcionalidades Principais
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Lista de contatos com opções para adicionar, editar e excluir contatos.
+- Suporte para adicionar fotos de perfil aos contatos.
+- Funcionalidade de câmera para tirar fotos e adicionar aos contatos.
+- Integração com a galeria para selecionar fotos da biblioteca.
+- Validação de campos obrigatórios ao criar ou atualizar contatos.
+- Feedback visual através de Snackbars.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+  ## Resultado
+  
+
+
+https://github.com/marconys/app_contatos/assets/90052315/c30fffe9-565c-482e-b13d-e0d1cfc60939
+
