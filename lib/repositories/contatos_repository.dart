@@ -33,10 +33,19 @@ class ContatosRepository {
   }
 
   //Atualiza o contato com base no objectId
-  Future<void> updateContao(Contatos contato) async {
+  Future<void> updateContato(Contatos contato) async {
     try {
       await _customDio.dio
           .put("/contatos/${contato.objectId}", data: contato.toJsonEndpoint());
+    } catch (e) {
+      throw Exception("Erro ao atualizar contato: $e");
+    }
+  }
+
+  Future<void> updateContatoNoPhoto(Contatos contato) async {
+    try {
+      await _customDio.dio
+          .put("/contatos/${contato.objectId}", data: contato.toJsonEndpointNoPhoto());
     } catch (e) {
       throw Exception("Erro ao atualizar contato: $e");
     }

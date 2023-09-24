@@ -1,4 +1,3 @@
-import 'dart:html';
 import 'dart:io';
 
 import 'package:brasil_fields/brasil_fields.dart';
@@ -6,6 +5,12 @@ import 'package:contatos/models/contatos_model.dart';
 import 'package:contatos/repositories/contatos_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:path_provider/path_provider.dart' as path_provider;
+import 'package:path/path.dart';
 
 class HomeContatosView extends StatefulWidget {
   const HomeContatosView({super.key});
@@ -19,8 +24,13 @@ class _HomeContatosViewState extends State<HomeContatosView> {
   var _contatosModel = ContatosModel([]);
   var controllerName = TextEditingController(text: "");
   var controllerPhone = TextEditingController(text: "");
-  String photoUrl = "UrlDefault";
+  var controllerUpName = TextEditingController(text: "");
+  var controllerUpPhone = TextEditingController(text: "");
+  String? objectId;
+  String? pathPhotoContato;
+  XFile? photoUrl;
   bool loading = false;
+  BuildContext? alertDialogContext;
 
   //busca todos os contatos e atribui a lista a variavel _contatosModel
   getContatos() async {
@@ -38,16 +48,22 @@ class _HomeContatosViewState extends State<HomeContatosView> {
   //Buca contato a partir do objectId;
   getContatoByObjectId(String id) async {
     var contato = await contatosRepository.getContaoByObjectId(id);
-    //TODO: INICIAR AS VARIÁVEIS QUE FOREM CRIADAS PARA ATUALIZAÇÃO DOS CAMPOS
+    objectId = id;
+    controllerUpName.text = contato!.name;
+    controllerUpPhone.text = contato.phone;
+    pathPhotoContato = contato.photoURL;
   }
 
-  // Snacbar padrão.
-  void showSnackBar(String menssage) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(menssage),
-      ),
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(alertDialogContext!).showSnackBar(
+      SnackBar(content: Text(message)),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getContatos();
   }
 
   @override
@@ -64,9 +80,11 @@ class _HomeContatosViewState extends State<HomeContatosView> {
             loading
                 ? const CircularProgressIndicator()
                 : Expanded(
+                    //Lista todos os contados
                     child: ListView.builder(
                         itemCount: _contatosModel.contatos?.length,
                         itemBuilder: (BuildContext bc, int index) {
+                          alertDialogContext = bc;
                           var contato = _contatosModel.contatos?[index];
 
                           return Dismissible(
@@ -80,9 +98,14 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                               showSnackBar("Contato excluído com sucesso");
                             },
                             child: ListTile(
-                              leading: (photoUrl != "UrlDefault")
-                                  //TODO: ALTERAR IMAGE.ASSET PARA FILE E IMPLEMENTAR FUNÇÃO PARA CONVERSÃO DO PATH
-                                  ? Image.asset("")
+                              //verifica antes se o path da foto foi salva, caso não tenha sido salvo ele terá o valor "sem foro" então ele exibirá um icon em vez da foto.
+                              leading: (contato.photoURL != "sem foto")
+                                  ? Image.file(
+                                      File(contato.photoURL),
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    )
                                   : const Icon(Icons.person_3),
                               title: Text(contato.name),
                               subtitle: Row(
@@ -93,8 +116,143 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                                   const Icon(Icons.phone)
                                 ],
                               ),
+                              //Atualizar contato
                               onTap: () {
-                                //TODO: IMPLEMETAR SHOWDIALOG PARA ATUALIZAÇÃO DO CONTATO
+                                getContatoByObjectId(contato.objectId);
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext bc) {
+                                      alertDialogContext = bc;
+                                      return AlertDialog(
+                                        title: const Text("Novo Contato"),
+                                        content: Wrap(
+                                          children: [
+                                            TextField(
+                                              controller: controllerUpName,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Nome',
+                                                  hintText: 'Nome do Contato'),
+                                            ),
+                                            TextField(
+                                              controller: controllerUpPhone,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Telefone',
+                                                  hintText:
+                                                      'Telefone do Contato'),
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly,
+                                                TelefoneInputFormatter(),
+                                              ],
+                                            ),
+                                            Center(
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top: 20),
+                                                child: GestureDetector(
+                                                    onTap: () {
+                                                      showModalBottomSheet(
+                                                          context: context,
+                                                          builder: (context) {
+                                                            return Wrap(
+                                                              children: [
+                                                                ListTile(
+                                                                  leading:
+                                                                      const Icon(
+                                                                          Icons
+                                                                              .camera_enhance),
+                                                                  title: const Text(
+                                                                      "Câmerea"),
+                                                                  onTap:
+                                                                      () async {
+                                                                    await captureAndSaveImage();
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                ),
+                                                                ListTile(
+                                                                  leading:
+                                                                      const Icon(
+                                                                          Icons
+                                                                              .image_outlined),
+                                                                  title: const Text(
+                                                                      "Galeria"),
+                                                                  onTap:
+                                                                      () async {
+                                                                    await getImageGallery();
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            );
+                                                          });
+                                                    },
+                                                    child: const Icon(
+                                                      Icons.image_search_sharp,
+                                                      size: 50,
+                                                    )),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: const Text("Cancelar")),
+                                          TextButton(
+                                              //Cria um novo Contato
+                                              onPressed: () async {
+                                                if (controllerUpName
+                                                        .text.isNotEmpty &&
+                                                    controllerUpPhone
+                                                        .text.isNotEmpty) {
+                                                  if (photoUrl?.path != null) {
+                                                    String updatedPhotoPath =
+                                                        photoUrl!.path;
+                                                    await contatosRepository
+                                                        .updateContato(
+                                                            Contatos.update(
+                                                                objectId
+                                                                    .toString(),
+                                                                controllerUpName
+                                                                    .text,
+                                                                controllerUpPhone
+                                                                    .text,
+                                                                updatedPhotoPath));
+                                                    photoUrl = null;
+
+                                                    Navigator.pop(context);
+                                                    showSnackBar(
+                                                        "Contato atualizado com sucesso");
+
+                                                    getContatos();
+                                                  } else {
+                                                    await contatosRepository
+                                                        .updateContatoNoPhoto(
+                                                            Contatos
+                                                                .updateNoPhoto(
+                                                      objectId.toString(),
+                                                      controllerUpName.text,
+                                                      controllerUpPhone.text,
+                                                    ));
+                                                    Navigator.pop(context);
+                                                    showSnackBar(
+                                                        "Contato atualizado com sucesso");
+                                                        getContatos();
+                                                  }
+                                                } else {
+                                                  Navigator.pop(context);
+                                                  showSnackBar(
+                                                      "todos os campos são obrigatórios");
+                                                }
+                                              },
+                                              child: const Text("Salvar")),
+                                        ],
+                                      );
+                                    });
                               },
                             ),
                           );
@@ -108,6 +266,7 @@ class _HomeContatosViewState extends State<HomeContatosView> {
           showDialog(
               context: context,
               builder: (BuildContext bc) {
+                alertDialogContext = bc;
                 return AlertDialog(
                   title: const Text("Novo Contato"),
                   content: Wrap(
@@ -131,39 +290,38 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                         child: Padding(
                           padding: const EdgeInsets.only(top: 20),
                           child: GestureDetector(
-                            onTap: () {
-                              showModalBottomSheet(
-                                  context: context,
-                                  builder: (context) {
-                                    return Wrap(
-                                      children: [
-                                        ListTile(
-                                          leading:
-                                              const Icon(Icons.camera_enhance),
-                                          title: const Text("Câmerea"),
-                                          onTap: () {
-                                            //TODO: IMPLEMENTAR CAPTURA E ARMAZENAR IMAGEM DA CAMERA
-                                          },
-                                        ),
-                                        ListTile(
-                                          leading:
-                                              const Icon(Icons.image_outlined),
-                                          title: const Text("Galeria"),
-                                          onTap: () {
-                                            //TODO: IMPLEMENTAR CAPTURA DE IMAGE DA GALERIA
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  });
-                            },
-                            child: const Column(
-                              children: [
-                                Icon(Icons.person_add),
-                                Text("Foto"),
-                              ],
-                            ),
-                          ),
+                              onTap: () {
+                                showModalBottomSheet(
+                                    context: context,
+                                    builder: (context) {
+                                      return Wrap(
+                                        children: [
+                                          ListTile(
+                                            leading: const Icon(
+                                                Icons.camera_enhance),
+                                            title: const Text("Câmerea"),
+                                            onTap: () async {
+                                              await captureAndSaveImage();
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                          ListTile(
+                                            leading: const Icon(
+                                                Icons.image_outlined),
+                                            title: const Text("Galeria"),
+                                            onTap: () async {
+                                              await getImageGallery();
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                              child: const Icon(
+                                Icons.image_search_sharp,
+                                size: 50,
+                              )),
                         ),
                       )
                     ],
@@ -175,17 +333,105 @@ class _HomeContatosViewState extends State<HomeContatosView> {
                         },
                         child: const Text("Cancelar")),
                     TextButton(
-                        onPressed: () {
-                          //TODO: IMPLEMENTAR A CRIAÇAO DE UM NOVO CONTATO.
+                        //Cria um novo Contato
+                        onPressed: () async {
+                          if (controllerName.text.isNotEmpty &&
+                              controllerName.text.isNotEmpty) {
+                            //Usa o  "sem foto" caso photoUrl seja null
+                            String photoUpload = photoUrl?.path ?? "sem foto";
+                            await contatosRepository.createContato(
+                                Contatos.create(controllerName.text,
+                                    controllerPhone.text, photoUpload));
+                            controllerName.clear();
+                            controllerPhone.clear();
+                            photoUrl = null;
+
+                            Navigator.pop(context);
+                            showSnackBar("Contato criado com sucesso");
+
+                            getContatos();
+                          } else {
+                            Navigator.pop(context);
+                            showSnackBar("Erro ao criar contato");
+                          }
                         },
                         child: const Text("Salvar")),
                   ],
                 );
               });
         },
-        //TODO: IMPLEMENTAR WIDGET PARA EXIBIR IMAGEM SELECIONADA E CONDIÇÃO PARA EXIBIÇÃO DA IMAGEM OU DO ICONE
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> captureAndSaveImage() async {
+    final ImagePicker imagePicker = ImagePicker();
+    // Captura uma imagem da câmera
+    photoUrl = await imagePicker.pickImage(source: ImageSource.camera);
+
+    if (photoUrl != null) {
+      // Obtém o diretório de documentos do aplicativo
+      String path =
+          (await path_provider.getApplicationDocumentsDirectory()).path;
+      // Obtém o nome do arquivo da imagem capturada
+      final String imageName = basename(photoUrl!.path);
+      // Move a imagem capturada para o diretório de documentos do aplicativo
+      final String imagePath = "$path/$imageName";
+      await photoUrl!.saveTo(imagePath);
+
+      // Salva a imagem na galeria
+      await GallerySaver.saveImage(imagePath);
+
+      // Chama o método para cortar a imagem (se necessário)
+      cropImage(photoUrl!);
+    }
+  }
+
+  Future<void> getImageGallery() async {
+    final ImagePicker imagePicker = ImagePicker();
+    // Captura uma imagem da galeria
+    photoUrl = await imagePicker.pickImage(source: ImageSource.gallery);
+
+    // Chama o método para cortar a imagem
+    cropImage(photoUrl!);
+  }
+
+  Future<void> cropImage(XFile imageFile) async {
+    // Utiliza o ImageCropper para cortar a imagem
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: imageFile.path, // Caminho da imagem original
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.purple, // Cor da barra de ferramentas
+            toolbarWidgetColor:
+                Colors.white, // Cor dos ícones da barra de ferramentas
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false), // Permite alterar a proporção
+        IOSUiSettings(
+          title: 'Cropper',
+        ),
+      ],
+    );
+
+    // Verifica se o corte foi realizado com sucesso
+    if (croppedFile != null) {
+      // Salva a imagem cortada na galeria
+      await GallerySaver.saveImage(croppedFile.path);
+
+      // Atualiza a variável photoUrl com o caminho da imagem cortada
+      photoUrl = XFile(croppedFile.path);
+
+      // Atualiza a interface do usuário para refletir a imagem cortada
+      setState(() {});
+    }
   }
 }

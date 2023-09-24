@@ -32,6 +32,7 @@ class Contatos {
   Contatos(this._name, this._phone, this._photoURL, this._createdAt, this._updatedAt);
   Contatos.create(this._name, this._phone, this._photoURL);
   Contatos.update(this._objectId, this._name, this._phone, this._photoURL);
+  Contatos.updateNoPhoto(this._objectId, this._name, this._phone);
 
   String get objectId => _objectId;
   set objectId(String objectId) => _objectId = objectId;
@@ -61,6 +62,14 @@ class Contatos {
     data['name'] = _name;
     data['phone'] = _phone;
     data['photoURL'] = _photoURL;
+    return data;
+  }
+
+   Map<String, dynamic> toJsonEndpointNoPhoto() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['objectId'] = _objectId;
+    data['name'] = _name;
+    data['phone'] = _phone;
     return data;
   }
 
